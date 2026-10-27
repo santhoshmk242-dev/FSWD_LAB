@@ -1,0 +1,379 @@
+import React, { useState } from "react";
+import "./App.css";
+
+function App() {
+  const [projects, setProjects] = useState([]);
+  const [projectName, setProjectName] = useState("");
+  const [taskName, setTaskName] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
+
+  // Add a new project
+  const addProject = () => {
+    if (projectName.trim() === "") {
+      alert("Enter project name");
+      return;
+    }
+
+    const newProject = {
+      id: Date.now(),
+      name: projectName,
+      tasks: [],
+    };
+
+    setProjects([...projects, newProject]);
+    setProjectName("");
+  };
+
+  // Add a task
+  const addTask = (projectId) => {
+    if (taskName.trim() === "") {
+      alert("Enter task name");
+      return;
+    }
+
+    setProjects(
+      projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              tasks: [
+                ...project.tasks,
+                {
+                  id: Date.now(),
+                  name: taskName,
+                  status: "Pending",
+                },
+              ],
+            }
+          : project
+      )
+    );
+
+    setTaskName("");
+    setSelectedProject("");
+  };
+
+  // Update task status
+  const updateStatus = (projectId, taskId, status) => {
+    setProjects(
+      projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              tasks: project.tasks.map((task) =>
+                task.id === taskId
+                  ? { ...task, status }
+                  : task
+              ),
+            }
+          : project
+      )
+    );
+  };
+
+  // Delete a task
+  const deleteTask = (projectId, taskId) => {
+    setProjects(
+      projects.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              tasks: project.tasks.filter(
+                (task) => task.id !== taskId
+              ),
+            }
+          : project
+      )
+    );
+  };
+
+  // Delete a project
+  const deleteProject = (projectId) => {
+    setProjects(
+      projects.filter((project) => project.id !== projectId)
+    );
+  };
+
+  const totalTasks = projects.reduce(
+    (total, project) => total + project.tasks.length,
+    0
+  );
+
+  const completedTasks = projects.reduce(
+    (total, project) =>
+      total +
+      project.tasks.filter(
+        (task) => task.status === "Completed"
+      ).length,
+    0
+  );
+
+  return (
+    <div className="app">
+      <header>
+        <h1>Project Management System</h1>
+        <p>Plan your projects. Manage your tasks. Track progress.</p>
+      </header>
+
+      <div className="dashboard">
+        <div className="card">
+          <h3>Total Projects</h3>
+          <h2>{projects.length}</h2>
+        </div>
+
+        <div className="card">
+          <h3>Total Tasks</h3>
+          <h2>{totalTasks}</h2>
+        </div>
+
+        <div className="card">
+          <h3>Completed Tasks</h3>
+          <h2>{completedTasks}</h2>
+        </div>
+      </div>
+
+      <section className="add-project">
+        <h2>Create New Project</h2>
+
+        <input
+          type="text"
+          placeholder="Enter project name"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+        />
+
+        <button onClick={addProject}>Add Project</button>
+      </section>
+
+      <section className="projects">
+        <h2>My Projects</h2>
+
+        {projects.length === 0 && (
+          <p>No projects available. Create your first project!</p>
+        )}
+
+        {projects.map((project) => (
+          <div className="project-card" key={project.id}>
+            <div className="project-heading">
+              <h3>{project.name}</h3>
+
+              <button
+                className="delete"
+                onClick={() => deleteProject(project.id)}
+              >
+                Delete Project
+              </button>
+            </div>
+
+            <div className="task-input">
+              <input
+                type="text"
+                placeholder="Enter task name"
+                value={
+                  selectedProject === String(project.id)
+                    ? taskName
+                    : ""
+                }
+                onFocus={() =>
+                  setSelectedProject(String(project.id))
+                }
+                onChange={(e) => {
+                  setSelectedProject(String(project.id));
+                  setTaskName(e.target.value);
+                }}
+              />
+
+              <button onClick={() => addTask(project.id)}>
+                Add Task
+              </button>
+            </div>
+
+            <h4>Tasks</h4>
+
+            {project.tasks.length === 0 && (
+              <p>No tasks added yet.</p>
+            )}
+
+            {project.tasks.map((task) => (
+              <div className="task" key={task.id}>
+                <span>{task.name}</span>
+
+                <select
+                  value={task.status}
+                  onChange={(e) =>
+                    updateStatus(
+                      project.id,
+                      task.id,
+                      e.target.value
+                    )
+                  }
+                >
+                  <option>Pending</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                </select>
+
+                <button
+                  className="delete"
+                  onClick={() =>
+                    deleteTask(project.id, task.id)
+                  }
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+export default App;
+
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.app {
+  max-width: 1100px;
+  margin: auto;
+  padding: 25px;
+}
+
+header {
+  background: #2563eb;
+  color: white;
+  padding: 25px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+header h1 {
+  margin-bottom: 10px;
+}
+
+.dashboard {
+  display: flex;
+  gap: 20px;
+  margin: 25px 0;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  text-align: center;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px #00000010;
+}
+
+.card h2 {
+  color: #2563eb;
+  font-size: 30px;
+}
+
+.add-project,
+.projects {
+  background: white;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+}
+
+input,
+select {
+  padding: 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  margin: 5px;
+}
+
+input {
+  min-width: 220px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 11px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.project-card {
+  border: 1px solid #e2e8f0;
+  padding: 18px;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+
+.project-heading,
+.task-input,
+.task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task {
+  background: #f8fafc;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.task span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.delete {
+  background: #dc2626;
+}
+
+.delete:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 650px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .project-heading,
+  .task-input,
+  .task {
+    flex-wrap: wrap;
+  }
+
+  input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import "./App.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
